@@ -1,4 +1,4 @@
-﻿Shader "Shader Sanur/Wave"
+﻿Shader "__Costum_Shader__/Wave"
 {
 	Properties
 	{
