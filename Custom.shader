@@ -1,15 +1,14 @@
-﻿Shader "Shader Sanur/Custom"
+Shader "__Costum_Shader__/Custom"
 {
     Properties
     {
     	[Header(Diffuse)]
+    	_Color ("Color", color) = (1., 1., 1., 1.)				// Color
         _MainTex ("Texture", 2D) = "white" {}						// Texture
-        _TintColor ("Tint Color", color) = (1., 1., 1., 1.)				// Tint Color
-
 
         [Header(Specular)]
         _SpecColor ("Specular color", color) = (1., 1., 1., 1.)		// Specular Color
-        _Shininess ("Shininess", Range(0.1, 10)) = 1.				// Shininess
+        _Shininess ("Shininess", Range(0, 10)) = 0.				// Shininess
 
         [Header(Ambient)]
         _AmbColor ("Color", color) = (1., 1., 1., 1.)				// Ambient Color
@@ -20,8 +19,8 @@
  
         [Header(Lightmap)]
         _LightMapTex ("Texture", 2D) = "gray" {}				// Light Map
-        _LightMapVal ("Intensity", float) = 0.					// Light Map Intensity
         _LightMapColor ("Tint Color", color) = (1., 1., 1., 1.)	// Light Map Color
+        _LightMapVal ("Intensity", Range(0, 10)) = 0.					// Light Map Intensity
 
         [Header(Mouse Event)]
         _HoverTex ("Mouse Hover Texture", 2D) = "white" {}	// Texture applied at mouse hover
@@ -53,8 +52,8 @@
             fixed4 _LightColor0;
            
             // Diffuse
-            fixed4 _TintColor;
- 
+            fixed4 _Color;
+
             //Specular
             fixed _Shininess;
             fixed4 _SpecColor;
@@ -98,13 +97,13 @@
  
                 // Calculate diffuse lighting
                 fixed4 NdotL = max(0., dot(worldNormal, lightDir) * _LightColor0);
-                fixed4 dif = NdotL * _LightColor0 * _TintColor;
+                fixed4 dif = NdotL * _LightColor0 * _Color;
                 o.light = dif + amb;
  
                 // Calculate specular 
                 float3 refl = reflect(-lightDir, worldNormal);
                 float RdotV = max(0., dot(refl, viewDir));
-                fixed4 spec = pow(RdotV, _Shininess) * _LightColor0 * ceil(NdotL) * _SpecColor;
+                fixed4 spec = RdotV* _Shininess * _LightColor0 * ceil(NdotL) * _SpecColor;
                	o.light += spec;
 
                	o.coord = v.normal;
@@ -122,6 +121,11 @@
             fixed4 frag(v2f i) : SV_Target
             {
                 fixed4 c = tex2D(_MainTex, i.uv);
+
+               	// Change texture overtime based on _LerpValue
+				// _LerpValue will change by mouse event from other component
+				c += lerp( tex2D(_MainTex, i.uv), tex2D(_HoverTex, i.uv), _LerpValue);
+
                 c.rgb *= i.light;
  
                 // Calculate lightmap
@@ -138,9 +142,7 @@
 	                c.rgb += finalColor;
 				#endif
 
-				// Change texture overtime based on _LerpValue
-				// _LerpValue will change by mouse event from other component
-				c += lerp( tex2D(_MainTex, i.uv), tex2D(_HoverTex, i.uv), _LerpValue);
+
 
                 return c;
             }
